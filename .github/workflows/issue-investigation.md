@@ -74,6 +74,10 @@ tools:
     min-integrity: none
 
 timeout-minutes: 10
+
+engine:
+  id: copilot
+  model: claude-sonnet-5
 ---
 
 # Agentic Issue Investigation
