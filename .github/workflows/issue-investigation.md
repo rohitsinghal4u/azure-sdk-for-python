@@ -77,7 +77,7 @@ timeout-minutes: 10
 
 engine:
   id: copilot
-  model: claude-sonnet-5
+  model: claude-sonnet-4.5
 ---
 
 # Agentic Issue Investigation
