@@ -451,7 +451,7 @@ class AzureAppConfigurationClient:
             entity=key_value,
             key=key_value.key,  # type: ignore
             label=key_value.label,
-            etag=etag or configuration_setting.etag,
+            etag=configuration_setting.etag or etag,
             match_condition=match_condition,
             error_map=error_map,
             **kwargs,
