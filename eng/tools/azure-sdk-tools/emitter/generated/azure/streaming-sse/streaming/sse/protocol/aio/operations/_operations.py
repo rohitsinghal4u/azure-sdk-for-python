@@ -63,11 +63,11 @@ class ProtocolOperations:  # pylint: disable=docstring-missing-param
         self.data = ProtocolDataOperations(self._client, self._config, self._serialize, self._deserialize)
 
     @distributed_trace_async
-    async def id(self, **kwargs: Any) -> AsyncStream[_models2.Info]:
+    async def id(self, **kwargs: Any) -> AsyncStream[_models2.ProtocolInfo]:
         """id.
 
-        :return: An instance of AsyncStream that iterates over Info
-        :rtype: ~streaming.sse.AsyncStream[~streaming.sse.protocol.models.Info]
+        :return: An instance of AsyncStream that iterates over ProtocolInfo
+        :rtype: ~streaming.sse.AsyncStream[~streaming.sse.protocol.models.ProtocolInfo]
         :raises ~azure.core.exceptions.HttpResponseError:
         """
         error_map: MutableMapping = {
@@ -81,7 +81,7 @@ class ProtocolOperations:  # pylint: disable=docstring-missing-param
         _headers = kwargs.pop("headers", {}) or {}
         _params = kwargs.pop("params", {}) or {}
 
-        cls: ClsType[AsyncStream[_models2.Info]] = kwargs.pop("cls", None)
+        cls: ClsType[AsyncStream[_models2.ProtocolInfo]] = kwargs.pop("cls", None)
 
         _last_event_id = kwargs.pop("last_event_id", None)
 
@@ -117,22 +117,22 @@ class ProtocolOperations:  # pylint: disable=docstring-missing-param
         def _callback(_http_response, _event):
             if _event.event == "message":
                 _event_json = json.loads(_event.data)
-                deserialized = _deserialize(_models2.Info, _event_json)
+                deserialized = _deserialize(_models2.ProtocolInfo, _event_json)
             else:
                 raise ValueError(f"Unknown SSE event type: {_event.event!r}")
             return deserialized
 
-        deserialized: AsyncStream[_models2.Info] = AsyncStream(response=response, deserialization_callback=_callback)  # type: ignore
+        deserialized: AsyncStream[_models2.ProtocolInfo] = AsyncStream(response=response, deserialization_callback=_callback)  # type: ignore
         if cls:
             return cls(pipeline_response, deserialized, {})  # type: ignore
         return deserialized
 
     @distributed_trace_async
-    async def invalid_id(self, **kwargs: Any) -> AsyncStream[_models2.Info]:
+    async def invalid_id(self, **kwargs: Any) -> AsyncStream[_models2.ProtocolInfo]:
         """invalid_id.
 
-        :return: An instance of AsyncStream that iterates over Info
-        :rtype: ~streaming.sse.AsyncStream[~streaming.sse.protocol.models.Info]
+        :return: An instance of AsyncStream that iterates over ProtocolInfo
+        :rtype: ~streaming.sse.AsyncStream[~streaming.sse.protocol.models.ProtocolInfo]
         :raises ~azure.core.exceptions.HttpResponseError:
         """
         error_map: MutableMapping = {
@@ -146,7 +146,7 @@ class ProtocolOperations:  # pylint: disable=docstring-missing-param
         _headers = kwargs.pop("headers", {}) or {}
         _params = kwargs.pop("params", {}) or {}
 
-        cls: ClsType[AsyncStream[_models2.Info]] = kwargs.pop("cls", None)
+        cls: ClsType[AsyncStream[_models2.ProtocolInfo]] = kwargs.pop("cls", None)
 
         _last_event_id = kwargs.pop("last_event_id", None)
 
@@ -182,22 +182,22 @@ class ProtocolOperations:  # pylint: disable=docstring-missing-param
         def _callback(_http_response, _event):
             if _event.event == "message":
                 _event_json = json.loads(_event.data)
-                deserialized = _deserialize(_models2.Info, _event_json)
+                deserialized = _deserialize(_models2.ProtocolInfo, _event_json)
             else:
                 raise ValueError(f"Unknown SSE event type: {_event.event!r}")
             return deserialized
 
-        deserialized: AsyncStream[_models2.Info] = AsyncStream(response=response, deserialization_callback=_callback)  # type: ignore
+        deserialized: AsyncStream[_models2.ProtocolInfo] = AsyncStream(response=response, deserialization_callback=_callback)  # type: ignore
         if cls:
             return cls(pipeline_response, deserialized, {})  # type: ignore
         return deserialized
 
     @distributed_trace_async
-    async def retry(self, **kwargs: Any) -> AsyncStream[_models2.Info]:
+    async def retry(self, **kwargs: Any) -> AsyncStream[_models2.ProtocolInfo]:
         """retry.
 
-        :return: An instance of AsyncStream that iterates over Info
-        :rtype: ~streaming.sse.AsyncStream[~streaming.sse.protocol.models.Info]
+        :return: An instance of AsyncStream that iterates over ProtocolInfo
+        :rtype: ~streaming.sse.AsyncStream[~streaming.sse.protocol.models.ProtocolInfo]
         :raises ~azure.core.exceptions.HttpResponseError:
         """
         error_map: MutableMapping = {
@@ -211,7 +211,7 @@ class ProtocolOperations:  # pylint: disable=docstring-missing-param
         _headers = kwargs.pop("headers", {}) or {}
         _params = kwargs.pop("params", {}) or {}
 
-        cls: ClsType[AsyncStream[_models2.Info]] = kwargs.pop("cls", None)
+        cls: ClsType[AsyncStream[_models2.ProtocolInfo]] = kwargs.pop("cls", None)
 
         _last_event_id = kwargs.pop("last_event_id", None)
 
@@ -247,22 +247,22 @@ class ProtocolOperations:  # pylint: disable=docstring-missing-param
         def _callback(_http_response, _event):
             if _event.event == "message":
                 _event_json = json.loads(_event.data)
-                deserialized = _deserialize(_models2.Info, _event_json)
+                deserialized = _deserialize(_models2.ProtocolInfo, _event_json)
             else:
                 raise ValueError(f"Unknown SSE event type: {_event.event!r}")
             return deserialized
 
-        deserialized: AsyncStream[_models2.Info] = AsyncStream(response=response, deserialization_callback=_callback)  # type: ignore
+        deserialized: AsyncStream[_models2.ProtocolInfo] = AsyncStream(response=response, deserialization_callback=_callback)  # type: ignore
         if cls:
             return cls(pipeline_response, deserialized, {})  # type: ignore
         return deserialized
 
     @distributed_trace_async
-    async def invalid_retry(self, **kwargs: Any) -> AsyncStream[_models2.Info]:
+    async def invalid_retry(self, **kwargs: Any) -> AsyncStream[_models2.ProtocolInfo]:
         """invalid_retry.
 
-        :return: An instance of AsyncStream that iterates over Info
-        :rtype: ~streaming.sse.AsyncStream[~streaming.sse.protocol.models.Info]
+        :return: An instance of AsyncStream that iterates over ProtocolInfo
+        :rtype: ~streaming.sse.AsyncStream[~streaming.sse.protocol.models.ProtocolInfo]
         :raises ~azure.core.exceptions.HttpResponseError:
         """
         error_map: MutableMapping = {
@@ -276,7 +276,7 @@ class ProtocolOperations:  # pylint: disable=docstring-missing-param
         _headers = kwargs.pop("headers", {}) or {}
         _params = kwargs.pop("params", {}) or {}
 
-        cls: ClsType[AsyncStream[_models2.Info]] = kwargs.pop("cls", None)
+        cls: ClsType[AsyncStream[_models2.ProtocolInfo]] = kwargs.pop("cls", None)
 
         _last_event_id = kwargs.pop("last_event_id", None)
 
@@ -312,22 +312,22 @@ class ProtocolOperations:  # pylint: disable=docstring-missing-param
         def _callback(_http_response, _event):
             if _event.event == "message":
                 _event_json = json.loads(_event.data)
-                deserialized = _deserialize(_models2.Info, _event_json)
+                deserialized = _deserialize(_models2.ProtocolInfo, _event_json)
             else:
                 raise ValueError(f"Unknown SSE event type: {_event.event!r}")
             return deserialized
 
-        deserialized: AsyncStream[_models2.Info] = AsyncStream(response=response, deserialization_callback=_callback)  # type: ignore
+        deserialized: AsyncStream[_models2.ProtocolInfo] = AsyncStream(response=response, deserialization_callback=_callback)  # type: ignore
         if cls:
             return cls(pipeline_response, deserialized, {})  # type: ignore
         return deserialized
 
     @distributed_trace_async
-    async def reconnect(self, **kwargs: Any) -> AsyncStream[_models2.Info]:
+    async def reconnect(self, **kwargs: Any) -> AsyncStream[_models2.ProtocolInfo]:
         """reconnect.
 
-        :return: An instance of AsyncStream that iterates over Info
-        :rtype: ~streaming.sse.AsyncStream[~streaming.sse.protocol.models.Info]
+        :return: An instance of AsyncStream that iterates over ProtocolInfo
+        :rtype: ~streaming.sse.AsyncStream[~streaming.sse.protocol.models.ProtocolInfo]
         :raises ~azure.core.exceptions.HttpResponseError:
         """
         error_map: MutableMapping = {
@@ -341,7 +341,7 @@ class ProtocolOperations:  # pylint: disable=docstring-missing-param
         _headers = kwargs.pop("headers", {}) or {}
         _params = kwargs.pop("params", {}) or {}
 
-        cls: ClsType[AsyncStream[_models2.Info]] = kwargs.pop("cls", None)
+        cls: ClsType[AsyncStream[_models2.ProtocolInfo]] = kwargs.pop("cls", None)
 
         _last_event_id = kwargs.pop("last_event_id", None)
 
@@ -377,12 +377,12 @@ class ProtocolOperations:  # pylint: disable=docstring-missing-param
         def _callback(_http_response, _event):
             if _event.event == "message":
                 _event_json = json.loads(_event.data)
-                deserialized = _deserialize(_models2.Info, _event_json)
+                deserialized = _deserialize(_models2.ProtocolInfo, _event_json)
             else:
                 raise ValueError(f"Unknown SSE event type: {_event.event!r}")
             return deserialized
 
-        deserialized: AsyncStream[_models2.Info] = AsyncStream(response=response, deserialization_callback=_callback)  # type: ignore
+        deserialized: AsyncStream[_models2.ProtocolInfo] = AsyncStream(response=response, deserialization_callback=_callback)  # type: ignore
         if cls:
             return cls(pipeline_response, deserialized, {})  # type: ignore
         return deserialized
