@@ -23,7 +23,7 @@ from corehttp.utils import case_insensitive_dict
 from ... import models as _models2, types as _types_models2
 from ...._utils.model_base import SdkJSONEncoder, _deserialize
 from ...._utils.serialization import Deserializer, Serializer
-from ...._utils.streaming_base import AsyncStream
+from ...._utils.streaming_base import AsyncStream, _read_sse_response_async, _update_sse_request_headers
 from ....aio._configuration import SseClientConfiguration
 from ...operations._operations import build_retrieve_stream_request
 
@@ -174,7 +174,20 @@ class RetrieveOperations:  # pylint: disable=docstring-missing-param
                 raise ValueError(f"Unknown SSE event type: {_event.event!r}")
             return deserialized
 
-        deserialized: AsyncStream[Union[_models2.PartialResult, _models2.FinalResult]] = AsyncStream(response=response, deserialization_callback=_callback, terminal_event="[DONE]")  # type: ignore
+        async def _reconnect(_last_event_id, _reconnect_delay):
+            _transport: Any = pipeline_response.context.transport
+            await _transport.sleep(_reconnect_delay)
+            _update_sse_request_headers(_request, _last_event_id)
+            _reconnect_response = await self._client.send_request(_request, stream=True, **kwargs)
+            if _reconnect_response.status_code not in [200, 204]:
+                await _read_sse_response_async(_reconnect_response)
+                map_error(
+                    status_code=_reconnect_response.status_code, response=_reconnect_response, error_map=error_map
+                )
+                raise HttpResponseError(response=_reconnect_response)
+            return _reconnect_response
+
+        deserialized: AsyncStream[Union[_models2.PartialResult, _models2.FinalResult]] = AsyncStream(response=response, deserialization_callback=_callback, terminal_event="[DONE]", last_event_id=_last_event_id, reconnect_callback=_reconnect)  # type: ignore
         if cls:
             return cls(pipeline_response, deserialized, {})  # type: ignore
         return deserialized
