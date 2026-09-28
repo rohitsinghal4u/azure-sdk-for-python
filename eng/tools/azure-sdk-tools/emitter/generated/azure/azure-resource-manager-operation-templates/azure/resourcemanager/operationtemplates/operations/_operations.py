@@ -3584,7 +3584,7 @@ class PagingOperations:  # pylint: disable=docstring-missing-param
             )
             if cls:
                 list_of_elem = cls(list_of_elem)  # type: ignore
-            return None, iter(list_of_elem)
+            return deserialized.get("nextLink") or None, iter(list_of_elem)
 
         def get_next(next_link=None):
             _request = prepare_request(next_link)

@@ -80,5 +80,5 @@
         "azure.resourcemanager.operationtemplates.operations.PagingOperations.mark_as_pageable": "Azure.ResourceManager.OperationTemplates.Paging.markAsPageable",
         "azure.resourcemanager.operationtemplates.aio.operations.PagingOperations.mark_as_pageable": "Azure.ResourceManager.OperationTemplates.Paging.markAsPageable"
     },
-    "CrossLanguageVersion": "eb54100191ea"
+    "CrossLanguageVersion": "52f69aba0409"
 }

@@ -3,8 +3,8 @@
     "CrossLanguageDefinitionId": {
         "streaming.sse.retrieve.models.FinalResult": "Streaming.Sse.Retrieve.FinalResult",
         "streaming.sse.unnamed.models.Info": "Streaming.Sse.Unnamed.Info",
-        "streaming.sse.protocol.models.Info": "Streaming.Sse.Protocol.Info",
         "streaming.sse.retrieve.models.PartialResult": "Streaming.Sse.Retrieve.PartialResult",
+        "streaming.sse.protocol.models.ProtocolInfo": "Streaming.Sse.Protocol.ProtocolInfo",
         "streaming.sse.named.models.ResponseCreated": "Streaming.Sse.Named.ResponseCreated",
         "streaming.sse.named.models.ResponseDelta": "Streaming.Sse.Named.ResponseDelta",
         "streaming.sse.retrieve.models.RetrievalRequest": "Streaming.Sse.Retrieve.RetrievalRequest",
@@ -27,5 +27,5 @@
         "streaming.sse.operations.ProtocolOperations.reconnect": "Streaming.Sse.Protocol.reconnect",
         "streaming.sse.aio.operations.ProtocolOperations.reconnect": "Streaming.Sse.Protocol.reconnect"
     },
-    "CrossLanguageVersion": "156f1a51a430"
+    "CrossLanguageVersion": "82596e02956c"
 }

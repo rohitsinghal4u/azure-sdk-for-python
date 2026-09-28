@@ -30,7 +30,7 @@ from .. import models as _models1
 from ..._configuration import SseClientConfiguration
 from ..._utils.model_base import _deserialize
 from ..._utils.serialization import Deserializer, Serializer
-from ..._utils.streaming_base import Stream
+from ..._utils.streaming_base import Stream, _read_sse_response, _update_sse_request_headers
 
 T = TypeVar("T")
 ClsType = Optional[Callable[[PipelineResponse[HttpRequest, HttpResponse], T, dict[str, Any]], Any]]
@@ -134,7 +134,20 @@ class NamedOperations:  # pylint: disable=docstring-missing-param
                 raise ValueError(f"Unknown SSE event type: {_event.event!r}")
             return deserialized
 
-        deserialized: Stream[Union[_models1.ResponseCreated, _models1.ResponseDelta]] = Stream(response=response, deserialization_callback=_callback, terminal_event="[DONE]")  # type: ignore
+        def _reconnect(_last_event_id, _reconnect_delay):
+            _transport: Any = pipeline_response.context.transport
+            _transport.sleep(_reconnect_delay)
+            _update_sse_request_headers(_request, _last_event_id)
+            _reconnect_response = self._client.send_request(_request, stream=True, **kwargs)
+            if _reconnect_response.status_code not in [200, 204]:
+                _read_sse_response(_reconnect_response)
+                map_error(
+                    status_code=_reconnect_response.status_code, response=_reconnect_response, error_map=error_map
+                )
+                raise HttpResponseError(response=_reconnect_response)
+            return _reconnect_response
+
+        deserialized: Stream[Union[_models1.ResponseCreated, _models1.ResponseDelta]] = Stream(response=response, deserialization_callback=_callback, terminal_event="[DONE]", last_event_id=_last_event_id, reconnect_callback=_reconnect)  # type: ignore
         if cls:
             return cls(pipeline_response, deserialized, {})  # type: ignore
         return deserialized

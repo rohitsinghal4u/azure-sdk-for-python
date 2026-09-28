@@ -30,7 +30,7 @@ from .. import models as _models1
 from ..._configuration import SseClientConfiguration
 from ..._utils.model_base import _deserialize
 from ..._utils.serialization import Deserializer, Serializer
-from ..._utils.streaming_base import Stream
+from ..._utils.streaming_base import Stream, _read_sse_response, _update_sse_request_headers
 from ..data.operations._operations import ProtocolDataOperations
 
 T = TypeVar("T")
@@ -130,11 +130,11 @@ class ProtocolOperations:  # pylint: disable=docstring-missing-param
         self.data = ProtocolDataOperations(self._client, self._config, self._serialize, self._deserialize)
 
     @distributed_trace
-    def id(self, **kwargs: Any) -> Stream[_models1.Info]:
+    def id(self, **kwargs: Any) -> Stream[_models1.ProtocolInfo]:
         """id.
 
-        :return: An instance of Stream that iterates over Info
-        :rtype: ~streaming.sse.Stream[~streaming.sse.protocol.models.Info]
+        :return: An instance of Stream that iterates over ProtocolInfo
+        :rtype: ~streaming.sse.Stream[~streaming.sse.protocol.models.ProtocolInfo]
         :raises ~azure.core.exceptions.HttpResponseError:
         """
         error_map: MutableMapping = {
@@ -148,7 +148,7 @@ class ProtocolOperations:  # pylint: disable=docstring-missing-param
         _headers = kwargs.pop("headers", {}) or {}
         _params = kwargs.pop("params", {}) or {}
 
-        cls: ClsType[Stream[_models1.Info]] = kwargs.pop("cls", None)
+        cls: ClsType[Stream[_models1.ProtocolInfo]] = kwargs.pop("cls", None)
 
         _last_event_id = kwargs.pop("last_event_id", None)
 
@@ -184,22 +184,35 @@ class ProtocolOperations:  # pylint: disable=docstring-missing-param
         def _callback(_http_response, _event):
             if _event.event == "message":
                 _event_json = json.loads(_event.data)
-                deserialized = _deserialize(_models1.Info, _event_json)
+                deserialized = _deserialize(_models1.ProtocolInfo, _event_json)
             else:
                 raise ValueError(f"Unknown SSE event type: {_event.event!r}")
             return deserialized
 
-        deserialized: Stream[_models1.Info] = Stream(response=response, deserialization_callback=_callback)  # type: ignore
+        def _reconnect(_last_event_id, _reconnect_delay):
+            _transport: Any = pipeline_response.context.transport
+            _transport.sleep(_reconnect_delay)
+            _update_sse_request_headers(_request, _last_event_id)
+            _reconnect_response = self._client.send_request(_request, stream=True, **kwargs)
+            if _reconnect_response.status_code not in [200, 204]:
+                _read_sse_response(_reconnect_response)
+                map_error(
+                    status_code=_reconnect_response.status_code, response=_reconnect_response, error_map=error_map
+                )
+                raise HttpResponseError(response=_reconnect_response)
+            return _reconnect_response
+
+        deserialized: Stream[_models1.ProtocolInfo] = Stream(response=response, deserialization_callback=_callback, last_event_id=_last_event_id, reconnect_callback=_reconnect)  # type: ignore
         if cls:
             return cls(pipeline_response, deserialized, {})  # type: ignore
         return deserialized
 
     @distributed_trace
-    def invalid_id(self, **kwargs: Any) -> Stream[_models1.Info]:
+    def invalid_id(self, **kwargs: Any) -> Stream[_models1.ProtocolInfo]:
         """invalid_id.
 
-        :return: An instance of Stream that iterates over Info
-        :rtype: ~streaming.sse.Stream[~streaming.sse.protocol.models.Info]
+        :return: An instance of Stream that iterates over ProtocolInfo
+        :rtype: ~streaming.sse.Stream[~streaming.sse.protocol.models.ProtocolInfo]
         :raises ~azure.core.exceptions.HttpResponseError:
         """
         error_map: MutableMapping = {
@@ -213,7 +226,7 @@ class ProtocolOperations:  # pylint: disable=docstring-missing-param
         _headers = kwargs.pop("headers", {}) or {}
         _params = kwargs.pop("params", {}) or {}
 
-        cls: ClsType[Stream[_models1.Info]] = kwargs.pop("cls", None)
+        cls: ClsType[Stream[_models1.ProtocolInfo]] = kwargs.pop("cls", None)
 
         _last_event_id = kwargs.pop("last_event_id", None)
 
@@ -249,22 +262,35 @@ class ProtocolOperations:  # pylint: disable=docstring-missing-param
         def _callback(_http_response, _event):
             if _event.event == "message":
                 _event_json = json.loads(_event.data)
-                deserialized = _deserialize(_models1.Info, _event_json)
+                deserialized = _deserialize(_models1.ProtocolInfo, _event_json)
             else:
                 raise ValueError(f"Unknown SSE event type: {_event.event!r}")
             return deserialized
 
-        deserialized: Stream[_models1.Info] = Stream(response=response, deserialization_callback=_callback)  # type: ignore
+        def _reconnect(_last_event_id, _reconnect_delay):
+            _transport: Any = pipeline_response.context.transport
+            _transport.sleep(_reconnect_delay)
+            _update_sse_request_headers(_request, _last_event_id)
+            _reconnect_response = self._client.send_request(_request, stream=True, **kwargs)
+            if _reconnect_response.status_code not in [200, 204]:
+                _read_sse_response(_reconnect_response)
+                map_error(
+                    status_code=_reconnect_response.status_code, response=_reconnect_response, error_map=error_map
+                )
+                raise HttpResponseError(response=_reconnect_response)
+            return _reconnect_response
+
+        deserialized: Stream[_models1.ProtocolInfo] = Stream(response=response, deserialization_callback=_callback, last_event_id=_last_event_id, reconnect_callback=_reconnect)  # type: ignore
         if cls:
             return cls(pipeline_response, deserialized, {})  # type: ignore
         return deserialized
 
     @distributed_trace
-    def retry(self, **kwargs: Any) -> Stream[_models1.Info]:
+    def retry(self, **kwargs: Any) -> Stream[_models1.ProtocolInfo]:
         """retry.
 
-        :return: An instance of Stream that iterates over Info
-        :rtype: ~streaming.sse.Stream[~streaming.sse.protocol.models.Info]
+        :return: An instance of Stream that iterates over ProtocolInfo
+        :rtype: ~streaming.sse.Stream[~streaming.sse.protocol.models.ProtocolInfo]
         :raises ~azure.core.exceptions.HttpResponseError:
         """
         error_map: MutableMapping = {
@@ -278,7 +304,7 @@ class ProtocolOperations:  # pylint: disable=docstring-missing-param
         _headers = kwargs.pop("headers", {}) or {}
         _params = kwargs.pop("params", {}) or {}
 
-        cls: ClsType[Stream[_models1.Info]] = kwargs.pop("cls", None)
+        cls: ClsType[Stream[_models1.ProtocolInfo]] = kwargs.pop("cls", None)
 
         _last_event_id = kwargs.pop("last_event_id", None)
 
@@ -314,22 +340,35 @@ class ProtocolOperations:  # pylint: disable=docstring-missing-param
         def _callback(_http_response, _event):
             if _event.event == "message":
                 _event_json = json.loads(_event.data)
-                deserialized = _deserialize(_models1.Info, _event_json)
+                deserialized = _deserialize(_models1.ProtocolInfo, _event_json)
             else:
                 raise ValueError(f"Unknown SSE event type: {_event.event!r}")
             return deserialized
 
-        deserialized: Stream[_models1.Info] = Stream(response=response, deserialization_callback=_callback)  # type: ignore
+        def _reconnect(_last_event_id, _reconnect_delay):
+            _transport: Any = pipeline_response.context.transport
+            _transport.sleep(_reconnect_delay)
+            _update_sse_request_headers(_request, _last_event_id)
+            _reconnect_response = self._client.send_request(_request, stream=True, **kwargs)
+            if _reconnect_response.status_code not in [200, 204]:
+                _read_sse_response(_reconnect_response)
+                map_error(
+                    status_code=_reconnect_response.status_code, response=_reconnect_response, error_map=error_map
+                )
+                raise HttpResponseError(response=_reconnect_response)
+            return _reconnect_response
+
+        deserialized: Stream[_models1.ProtocolInfo] = Stream(response=response, deserialization_callback=_callback, last_event_id=_last_event_id, reconnect_callback=_reconnect)  # type: ignore
         if cls:
             return cls(pipeline_response, deserialized, {})  # type: ignore
         return deserialized
 
     @distributed_trace
-    def invalid_retry(self, **kwargs: Any) -> Stream[_models1.Info]:
+    def invalid_retry(self, **kwargs: Any) -> Stream[_models1.ProtocolInfo]:
         """invalid_retry.
 
-        :return: An instance of Stream that iterates over Info
-        :rtype: ~streaming.sse.Stream[~streaming.sse.protocol.models.Info]
+        :return: An instance of Stream that iterates over ProtocolInfo
+        :rtype: ~streaming.sse.Stream[~streaming.sse.protocol.models.ProtocolInfo]
         :raises ~azure.core.exceptions.HttpResponseError:
         """
         error_map: MutableMapping = {
@@ -343,7 +382,7 @@ class ProtocolOperations:  # pylint: disable=docstring-missing-param
         _headers = kwargs.pop("headers", {}) or {}
         _params = kwargs.pop("params", {}) or {}
 
-        cls: ClsType[Stream[_models1.Info]] = kwargs.pop("cls", None)
+        cls: ClsType[Stream[_models1.ProtocolInfo]] = kwargs.pop("cls", None)
 
         _last_event_id = kwargs.pop("last_event_id", None)
 
@@ -379,22 +418,35 @@ class ProtocolOperations:  # pylint: disable=docstring-missing-param
         def _callback(_http_response, _event):
             if _event.event == "message":
                 _event_json = json.loads(_event.data)
-                deserialized = _deserialize(_models1.Info, _event_json)
+                deserialized = _deserialize(_models1.ProtocolInfo, _event_json)
             else:
                 raise ValueError(f"Unknown SSE event type: {_event.event!r}")
             return deserialized
 
-        deserialized: Stream[_models1.Info] = Stream(response=response, deserialization_callback=_callback)  # type: ignore
+        def _reconnect(_last_event_id, _reconnect_delay):
+            _transport: Any = pipeline_response.context.transport
+            _transport.sleep(_reconnect_delay)
+            _update_sse_request_headers(_request, _last_event_id)
+            _reconnect_response = self._client.send_request(_request, stream=True, **kwargs)
+            if _reconnect_response.status_code not in [200, 204]:
+                _read_sse_response(_reconnect_response)
+                map_error(
+                    status_code=_reconnect_response.status_code, response=_reconnect_response, error_map=error_map
+                )
+                raise HttpResponseError(response=_reconnect_response)
+            return _reconnect_response
+
+        deserialized: Stream[_models1.ProtocolInfo] = Stream(response=response, deserialization_callback=_callback, last_event_id=_last_event_id, reconnect_callback=_reconnect)  # type: ignore
         if cls:
             return cls(pipeline_response, deserialized, {})  # type: ignore
         return deserialized
 
     @distributed_trace
-    def reconnect(self, **kwargs: Any) -> Stream[_models1.Info]:
+    def reconnect(self, **kwargs: Any) -> Stream[_models1.ProtocolInfo]:
         """reconnect.
 
-        :return: An instance of Stream that iterates over Info
-        :rtype: ~streaming.sse.Stream[~streaming.sse.protocol.models.Info]
+        :return: An instance of Stream that iterates over ProtocolInfo
+        :rtype: ~streaming.sse.Stream[~streaming.sse.protocol.models.ProtocolInfo]
         :raises ~azure.core.exceptions.HttpResponseError:
         """
         error_map: MutableMapping = {
@@ -408,7 +460,7 @@ class ProtocolOperations:  # pylint: disable=docstring-missing-param
         _headers = kwargs.pop("headers", {}) or {}
         _params = kwargs.pop("params", {}) or {}
 
-        cls: ClsType[Stream[_models1.Info]] = kwargs.pop("cls", None)
+        cls: ClsType[Stream[_models1.ProtocolInfo]] = kwargs.pop("cls", None)
 
         _last_event_id = kwargs.pop("last_event_id", None)
 
@@ -444,12 +496,25 @@ class ProtocolOperations:  # pylint: disable=docstring-missing-param
         def _callback(_http_response, _event):
             if _event.event == "message":
                 _event_json = json.loads(_event.data)
-                deserialized = _deserialize(_models1.Info, _event_json)
+                deserialized = _deserialize(_models1.ProtocolInfo, _event_json)
             else:
                 raise ValueError(f"Unknown SSE event type: {_event.event!r}")
             return deserialized
 
-        deserialized: Stream[_models1.Info] = Stream(response=response, deserialization_callback=_callback)  # type: ignore
+        def _reconnect(_last_event_id, _reconnect_delay):
+            _transport: Any = pipeline_response.context.transport
+            _transport.sleep(_reconnect_delay)
+            _update_sse_request_headers(_request, _last_event_id)
+            _reconnect_response = self._client.send_request(_request, stream=True, **kwargs)
+            if _reconnect_response.status_code not in [200, 204]:
+                _read_sse_response(_reconnect_response)
+                map_error(
+                    status_code=_reconnect_response.status_code, response=_reconnect_response, error_map=error_map
+                )
+                raise HttpResponseError(response=_reconnect_response)
+            return _reconnect_response
+
+        deserialized: Stream[_models1.ProtocolInfo] = Stream(response=response, deserialization_callback=_callback, last_event_id=_last_event_id, reconnect_callback=_reconnect)  # type: ignore
         if cls:
             return cls(pipeline_response, deserialized, {})  # type: ignore
         return deserialized
