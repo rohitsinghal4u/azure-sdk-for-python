@@ -12,7 +12,7 @@ on:
         description: "Controlled post-processing scenario"
         required: true
         type: choice
-        options: [success, owner-failure, mutation-failure, staged]
+        options: [success, single-owner, owner-failure, mutation-failure, staged]
 permissions: {}
 env:
   GH_AW_SAFE_OUTPUTS_STAGED: ${{ inputs.mode == 'staged' && 'true' || 'false' }}
@@ -56,7 +56,7 @@ jobs:
               throw new Error('Invalid validation issue number');
             }
             const mode = process.env.TEST_MODE;
-            if (!['success', 'owner-failure', 'mutation-failure', 'staged'].includes(mode)) {
+            if (!['success', 'single-owner', 'owner-failure', 'mutation-failure', 'staged'].includes(mode)) {
               throw new Error('Invalid validation mode');
             }
             const { data: issue } = await github.rest.issues.get({ ...context.repo, issue_number: number });
@@ -66,18 +66,28 @@ jobs:
                 issue.labels.length !== 1 || issue.labels[0].name !== 'needs-triage') {
               throw new Error('The dedicated validation issue must be open, unlocked, and reset to needs-triage');
             }
-            const output = {
-              items: [
-                { type: 'dispatch_workflow', workflow_name: 'issue-investigation', inputs: { issue_number: String(number) } },
-                { type: 'remove_labels', item_number: number, labels: ['needs-triage'] },
-                { type: 'add_labels', item_number: number, labels: ['customer-reported', 'KeyVault', 'Client'] },
-                { type: 'add_comment', item_number: mode === 'mutation-failure' ? 0 : number,
-                  body: '## Agentic Issue Triage\n\nManual post-processing test: the controller supplies the triage labels and this analysis for a missing-information fixture.' },
-                { type: 'mention_owners', owners: mode === 'owner-failure' ? '' : 'rohitsinghal4u',
-                  message: 'Manual validation owner routing completed.' }
-              ],
-              errors: []
+            const items = [
+              { type: 'dispatch_workflow', workflow_name: 'issue-investigation', inputs: { issue_number: String(number) } },
+              { type: 'remove_labels', item_number: number, labels: ['needs-triage'] },
+              { type: 'add_labels', item_number: number, labels: ['customer-reported', 'KeyVault', 'Client'] }
+            ];
+            const analysis = {
+              type: 'add_comment', item_number: mode === 'mutation-failure' ? 0 : number,
+              body: '## Agentic Issue Triage\n\nManual post-processing test: the controller supplies the triage labels and this analysis for a missing-information fixture.'
             };
+            if (mode === 'single-owner') {
+              items.push(
+                { type: 'assign_to_user', issue_number: number, assignees: ['rohitsinghal4u'] },
+                { type: 'add_comment', item_number: number, body: 'Manual validation owner routing completed.' },
+                analysis
+              );
+            } else {
+              items.push(analysis, {
+                type: 'mention_owners', owners: mode === 'owner-failure' ? '' : 'rohitsinghal4u',
+                message: 'Manual validation owner routing completed.'
+              });
+            }
+            const output = { items, errors: [] };
             fs.writeFileSync(path.join(process.env.RUNNER_TEMP, 'agent_output.json'), JSON.stringify(output));
             core.setOutput('types', JSON.stringify(output.items.map(item => item.type)));
       - name: Upload controlled outputs
@@ -385,7 +395,7 @@ jobs:
       !cancelled() && needs.agent.result == 'success' && needs.detection.result == 'success' && needs.detection.outputs.detection_conclusion == 'success' &&
       needs.safe_outputs.result == 'success' && needs.safe_outputs.outputs.process_safe_outputs_status == 'success' &&
       fromJSON(needs.safe_outputs.outputs.process_safe_outputs_items_applied || '0') > 0 && needs.safe_outputs.outputs.comment_id != '' &&
-      needs.mention_owners.result == 'success'
+      (needs.mention_owners.result == 'success' || needs.mention_owners.result == 'skipped')
     runs-on: ubuntu-latest
     permissions:
       actions: write
@@ -412,6 +422,17 @@ jobs:
         uses: github/gh-aw-actions/setup@5e508589e03a7757a7e05b26e834292f5445bfb6 # v0.88.8
         with:
           destination: ${{ runner.temp }}/gh-aw/actions
+      - name: Download applied triage receipts
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: safe-outputs-items
+          path: ${{ runner.temp }}/triage-receipts
+      - name: Download triage routing requests
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          merge-multiple: true
+          path: ${{ runner.temp }}/triage-requests
+          pattern: "{agent,agent-output-fallback}"
       - name: Validate applied triage and dispatch investigation
         id: handoff
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
@@ -420,13 +441,24 @@ jobs:
           GH_AW_DETECTION_CONCLUSION: ${{ needs.detection.outputs.detection_conclusion }}
           GH_AW_WORKFLOW_ID: issue-triage
           GH_AW_WORKFLOW_NAME: Agentic Triage
-          TRIAGE_COMMENT_ID: ${{ needs.safe_outputs.outputs.comment_id }}
           TRIAGE_ISSUE_NUMBER: ${{ github.event.issue.number || github.event.inputs.issue_number }}
+          TRIAGE_OWNER_NOTIFICATION: ${{ needs.mention_owners.result }}
         with:
           github-token: ${{ github.token }}
           script: |
             const fs = require('node:fs');
             const path = require('node:path');
+            const actionsDir = path.join(process.env.RUNNER_TEMP, 'gh-aw', 'actions');
+            require(path.join(actionsDir, 'setup_globals.cjs'))
+              .setupGlobals(core, github, context, exec, io, getOctokit);
+            const { extractAssignees, resolveIssueNumber } = require(path.join(actionsDir, 'safe_output_helpers.cjs'));
+            const { processItems } = require(path.join(actionsDir, 'safe_output_processor.cjs'));
+            const appliedItems = fs.readFileSync(
+              path.join(process.env.RUNNER_TEMP, 'triage-receipts', 'safe-output-items.jsonl'), 'utf8'
+            ).split(/\r?\n/).filter(line => line.trim()).map(line => JSON.parse(line));
+            const agentOutput = JSON.parse(fs.readFileSync(
+              path.join(process.env.RUNNER_TEMP, 'triage-requests', 'agent_output.json'), 'utf8'
+            ));
             const helper = require(path.join(
               process.env.GITHUB_WORKSPACE, 'triage-handoff',
               '.github', 'workflows', 'scripts', 'issue_investigation_handoff.cjs'
@@ -434,7 +466,12 @@ jobs:
             const handoff = await helper.prepareHandoff({
               github, context,
               issueNumber: process.env.TRIAGE_ISSUE_NUMBER,
-              commentId: process.env.TRIAGE_COMMENT_ID
+              appliedItems, agentOutput,
+              ownerNotification: process.env.TRIAGE_OWNER_NOTIFICATION,
+              normalizeAssignment: item => ({
+                ...resolveIssueNumber(item),
+                assignees: processItems(extractAssignees(item), [], 1, [])
+              })
             });
             if (!handoff.output) {
               core.notice(`Investigation handoff skipped: ${handoff.reason}`);
@@ -445,9 +482,8 @@ jobs:
             core.setOutput('dispatch_requested', 'true');
             process.env.GH_AW_AGENT_OUTPUT = file;
             process.env.GH_AW_SAFE_OUTPUTS_HANDLER_CONFIG = JSON.stringify(handoff.config);
-            const actionsDir = path.join(process.env.RUNNER_TEMP, 'gh-aw', 'actions');
-            require(path.join(actionsDir, 'setup_globals.cjs'))
-              .setupGlobals(core, github, context, exec, io, getOctokit);
+            const { MANIFEST_FILE_PATH } = require(path.join(actionsDir, 'constants.cjs'));
+            fs.mkdirSync(path.dirname(MANIFEST_FILE_PATH), { recursive: true });
             await require(path.join(actionsDir, 'process_safe_outputs.cjs')).main();
       - name: Confirm investigation dispatch succeeded
         if: steps.handoff.outputs.dispatch_requested == 'true' && (steps.handoff.outputs.status != 'success' || steps.handoff.outputs.items_applied != '1')
