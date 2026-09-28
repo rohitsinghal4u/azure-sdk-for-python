@@ -72,8 +72,9 @@ jobs:
               { type: 'add_labels', item_number: number, labels: ['customer-reported', 'KeyVault', 'Client'] }
             ];
             const analysis = {
-              type: 'add_comment', item_number: mode === 'mutation-failure' ? 0 : number,
-              body: '## Agentic Issue Triage\n\nManual post-processing test: the controller supplies the triage labels and this analysis for a missing-information fixture.'
+              type: 'add_comment', item_number: number,
+              body: mode === 'mutation-failure' ? '' :
+                '## Agentic Issue Triage\n\nManual post-processing test: the controller supplies the triage labels and this analysis for a missing-information fixture.'
             };
             if (mode === 'single-owner') {
               items.push(
